@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "dyna-irt"
+version = "0.1.0"
+description = ""
+authors = ["Pedro Rodriguez"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pedroai = "^0.1.15"
+typer = "^0.3.2"
+ipykernel = "^6.0.3"
+openTSNE = "^0.6.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+black = "^21.5b2"
+isort = "^5.8.0"
+pylint = "^2.8.3"
+ipython = "^7.24.1"
+notebook = "^6.4.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
