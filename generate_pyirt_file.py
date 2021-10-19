@@ -81,10 +81,10 @@ with open(args.d, "r") as infile:
 
 # load and score each response in the predictions file
 # get the dataset name
-dname = args.d.split("/")[2]
+dname = args.d.split("/")[-1]
 preds = dict()
 print(dname)
-for f in glob.glob(f"predictions_for_pedro/*/*/*/{dname}.out"):
+for f in glob.glob(f"{args.f}/*/*/{dname}.out"):
     print(f)
     preds[f] = {
         "responses": dict()
@@ -95,12 +95,14 @@ for f in glob.glob(f"predictions_for_pedro/*/*/*/{dname}.out"):
             gold = gold_dict[d["id"]]
             text = gold["statement"]
             label = gold["label"]
-            pred = d[task_dict[args.t]["label"]]
+            if type(label) == list:
+                label = label[0].lower()
+            pred = d[task_dict[args.t]["label"]].lower()
             preds[f]["responses"][text] = int(label == pred)
 
-outfile = f"{args.d}.preds.jsonlines"
+outf = f"{args.d}.preds.jsonlines"
 
-with open(outfile, "w") as outfile:
+with open(outf, "w") as outfile:
     for user, user_preds in preds.items():
         output = {
             "subject_id": user,
