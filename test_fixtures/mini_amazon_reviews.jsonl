@@ -1,0 +1,3 @@
+{"uid": "1234", "statement": "this is a positive statement", "label": "positive"}
+{"uid": "9999", "statement": "this is a negative statement", "label": "negative"}
+{"uid": "1", "statement": "this is a neutral statement", "label": "neutral"}

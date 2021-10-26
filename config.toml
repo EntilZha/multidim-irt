@@ -1,0 +1,18 @@
+data_dir = 'data/'
+
+
+[topic."num_topics=10"]
+num_topics = 10
+output_dir = "data/topic-model/num_topics=10"
+
+[topic."num_topics=50"]
+num_topics = 50
+output_dir = "data/topic-model/num_topics=50"
+
+[topic."num_topics=100"]
+num_topics = 100
+output_dir = "data/topic-model/num_topics=100"
+
+[topic."num_topics=500"]
+num_topics = 500
+output_dir = "data/topic-model/num_topics=500"
