@@ -1,18 +1,19 @@
 data_dir = 'data/'
 
+[reviews.dev]
+amazon = "datasets/sentiment/amazon-review-dev.jsonl"
+dynasent_r1 = "datasets/sentiment/dynasent-r1-dev.jsonl"
+dynasent_r2 = "datasets/sentiment/dynasent-r2-dev.jsonl"
+sst3 = "datasets/sentiment/sst3-dev.jsonl"
+yelp = "datasets/sentiment/yelp-review-dev.jsonl"
+
+[mallet_reviews.dev]
+amazon = "datasets/sentiment/amazon-review-dev.mallet"
+dynasent_r1 = "datasets/sentiment/dynasent-r1-dev.mallet"
+dynasent_r2 = "datasets/sentiment/dynasent-r2-dev.mallet"
+sst3 = "datasets/sentiment/sst3-dev.mallet"
+yelp = "datasets/sentiment/yelp-review-dev.mallet"
 
 [topic."num_topics=10"]
 num_topics = 10
-output_dir = "data/topic-model/num_topics=10"
-
-[topic."num_topics=50"]
-num_topics = 50
-output_dir = "data/topic-model/num_topics=50"
-
-[topic."num_topics=100"]
-num_topics = 100
-output_dir = "data/topic-model/num_topics=100"
-
-[topic."num_topics=500"]
-num_topics = 500
-output_dir = "data/topic-model/num_topics=500"
+output_dir = "topic-model/sentiment/num_topics=10"

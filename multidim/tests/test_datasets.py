@@ -1,8 +1,8 @@
-from multidim.dynaboard_datasets import AmazonReview
+from multidim.dynaboard_datasets import Review
 
 
-def test_amazon_parsing():
-    dataset = AmazonReview.from_jsonlines('test_fixtures/mini_amazon_reviews.jsonl')
+def test_review_parsing():
+    dataset = Review.from_jsonlines('test_fixtures/mini_amazon_reviews.jsonl')
     assert len(dataset) == 3
     assert dataset[0].uid == "1234"
     assert dataset[0].statement == "this is a positive statement"

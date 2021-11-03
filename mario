@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+PYTHONPATH='$PYTHONPATH:.' luigi --module multidim.tasks --local-scheduler "$@"

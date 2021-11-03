@@ -9,13 +9,13 @@ class LabelEnum(str, Enum):
     negative = 'negative'
 
 
-class AmazonReview(pydantic.BaseModel):
+class Review(pydantic.BaseModel):
     uid: str
     statement: str
     label: LabelEnum
 
     @classmethod
-    def from_jsonlines(cls, path: str) -> List['AmazonReview']:
+    def from_jsonlines(cls, path: str) -> List['Review']:
         with open(path) as f:
             rows = []
             for line in f:
