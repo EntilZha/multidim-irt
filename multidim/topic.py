@@ -8,7 +8,7 @@ from pedroai.io import read_json, shell, write_json
 from rich.console import Console
 
 from multidim.config import DATA_ROOT, conf
-from multidim.dynaboard_datasets import Review
+from multidim.dynaboard_datasets import Sentiment
 
 console = Console()
 
@@ -17,7 +17,7 @@ topic_app = typer.Typer()
 
 
 def reviews_to_mallet(input_file: str, output_file: str):
-    reviews = Review.from_jsonlines(input_file)
+    reviews = Sentiment.from_jsonlines(input_file)
     with open(output_file, "w") as f:
         for r in reviews:
             f.write(f"{r.uid}\t{r.label}\t{r.statement}\n")

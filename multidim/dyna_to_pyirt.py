@@ -1,4 +1,6 @@
+from typing import List
 import typer
+import pydantic
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
@@ -12,7 +14,7 @@ from dataset import Dataset
 app = typer.Typer()
 alt.data_transformers.disable_max_rows()
 
-datasets = [
+sentiment_datasets = [
     "amazon-review-dev",
     "dynasent-r1-dev",
     "dynasent-r2-dev",
@@ -20,12 +22,23 @@ datasets = [
     "yelp-review-dev",
 ]
 
-models = ["albert", "always-positive", "bert", "deberta", "fasttext", "roberta", "t5"]
+
+class DynabenchModel(pydantic.BaseModel):
+    name: str
+    sentiment_dev: str
+
+
+def list_models() -> List[DynabenchModel]:
+    models = []
+    for p in Path("data/dynaboard_model_outputs").iterdir():
+        if p.is_dir():
+            models.append(DynabenchModel(sentiment_dev=str(p), name=p.name))
+    return models
 
 
 def load_gold_labels():
     dataset_labels = {}
-    for d in datasets:
+    for d in sentiment_datasets:
         labels = {}
         for item in read_jsonlines(f"data/sentiment_gold_labels/{d}.jsonl"):
             labels[str(item["uid"])] = item["label"]
@@ -40,19 +53,20 @@ def load_gold_labels():
 
 @app.command()
 def convert(output_dir: str):
+    models = list_models()
     dataset_labels, _ = load_gold_labels()
-    model_scores = {m: {} for m in models}
+    model_scores = {m.name: {} for m in models}
     item_correct = defaultdict(int)
     item_total = defaultdict(int)
     for m in models:
-        for d in datasets:
+        for d in sentiment_datasets:
             for pred in read_jsonlines(
-                f"data/dynaboard_model_outputs/{m}/sentiment/{d}.jsonl.out"
+                f"data/dynaboard_model_outputs/{m.name}/sentiment/{d}.jsonl.out"
             ):
                 item_id = str(pred["id"])
                 pred_label = pred["label"]
                 gold_label = dataset_labels[d][item_id]
-                model_scores[m][item_id] = int(pred_label == gold_label)
+                model_scores[m.name][item_id] = int(pred_label == gold_label)
                 item_correct[item_id] += int(pred_label == gold_label)
                 item_total[item_id] += 1
 

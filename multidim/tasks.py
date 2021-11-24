@@ -1,6 +1,12 @@
+from collections import defaultdict
+from multiprocessing import Value
+from pathlib import Path
 import luigi
+from pedroai.io import read_jsonlines, write_jsonlines
+from multidim.dyna_to_pyirt import list_models, load_gold_labels
 from multidim.config import DATA_ROOT, conf
 from multidim.topic import TopicModel, reviews_to_mallet
+from multidim import dyna_to_pyirt
 from multidim.log import get_logger
 
 
@@ -74,3 +80,46 @@ class AllSentimentExperiments(luigi.WrapperTask):
     def requires(self):
         for dataset in conf["reviews"]["dev"].keys():
             yield SentimentTopicModel(dataset=dataset)
+
+
+class SentimentToPyIrt(luigi.Task):
+    task = luigi.Parameter(default="sentiment")
+
+    def requires(self):
+        for dataset in conf["reviews"]["dev"].keys():
+            yield SentimentData(dataset=dataset)
+
+    def run(self):
+        dataset_labels, _ = load_gold_labels()
+        models = list(list_models())
+        if len(models) == 0:
+            raise ValueError("Number of models is zero")
+        model_scores = {m.name: {} for m in models}
+        item_correct = defaultdict(int)
+        item_total = defaultdict(int)
+        for m in models:
+            for d in dyna_to_pyirt.sentiment_datasets:
+                for pred in read_jsonlines(
+                    f"data/dynaboard_model_outputs/{m.name}/{self.task}/{d}.jsonl.out"
+                ):
+                    item_id = str(pred["id"])
+                    pred_label = pred["label"]
+                    gold_label = dataset_labels[d][item_id]
+                    model_scores[m.name][item_id] = int(pred_label == gold_label)
+                    item_correct[item_id] += int(pred_label == gold_label)
+                    item_total[item_id] += 1
+
+        breakpoint
+        output = []
+        for model_name, responses in model_scores.items():
+            if len(responses) == 0:
+                raise ValueError("Zero responses")
+            output.append({"subject_id": model_name, "responses": responses})
+
+        output_dir = Path("data/") / "irt-inputs" / self.task
+        output_dir.mkdir(exist_ok=True, parents=True)
+        output_path = output_dir / "irt-inputs.jsonlines"
+        write_jsonlines(output_path, output)
+
+    def output(self):
+        return Path("data/") / "irt-inputs" / self.task / "irt-inputs.jsonlines"

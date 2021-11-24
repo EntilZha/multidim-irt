@@ -1,4 +1,13 @@
 data_dir = 'data/'
+dynaboard_model_outputs = 'dynaboard_model_outputs'
+tasks = ["hs", "nli", "qa", "sentiment"]
+
+[sentiment_names.dev]
+amazon = "amazon-review-dev"
+dynasent_r1 = "dynasent-r1-dev"
+dynasent_r2 = "dynasent-r2-dev"
+sst3 = "sst3-dev"
+yelp = "yelp-review-dev"
 
 [reviews.dev]
 amazon = "datasets/sentiment/amazon-review-dev.jsonl"
