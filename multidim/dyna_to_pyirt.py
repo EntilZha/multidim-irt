@@ -9,18 +9,11 @@ from pedroai.io import read_json, read_jsonlines, write_json, write_jsonlines
 from pedroai.altair import save_chart
 import altair as alt
 from dataset import Dataset
+from multidim.config import conf, DATA_ROOT
 
 
 app = typer.Typer()
 alt.data_transformers.disable_max_rows()
-
-sentiment_datasets = [
-    "amazon-review-dev",
-    "dynasent-r1-dev",
-    "dynasent-r2-dev",
-    "sst3-dev",
-    "yelp-review-dev",
-]
 
 
 class DynabenchModel(pydantic.BaseModel):
@@ -36,14 +29,14 @@ def list_models() -> List[DynabenchModel]:
     return models
 
 
-def load_gold_labels():
+def load_gold_labels(task: str):
     dataset_labels = {}
-    for d in sentiment_datasets:
+    for dataset, path in conf[task]["dev"]["names"].items():
         labels = {}
-        for item in read_jsonlines(f"data/sentiment_gold_labels/{d}.jsonl"):
+        for item in read_jsonlines(DATA_ROOT / path):
             labels[str(item["uid"])] = item["label"]
 
-        dataset_labels[d] = labels
+        dataset_labels[dataset] = labels
     item_to_dataset = {}
     for dataset, labels in dataset_labels.items():
         for item_id in labels.keys():
@@ -52,16 +45,17 @@ def load_gold_labels():
 
 
 @app.command()
-def convert(output_dir: str):
+def convert(task: str, output_dir: str):
     models = list_models()
-    dataset_labels, _ = load_gold_labels()
+    dataset_labels, _ = load_gold_labels(task)
     model_scores = {m.name: {} for m in models}
     item_correct = defaultdict(int)
     item_total = defaultdict(int)
+    datasets = conf[task]["dev"]["names"].keys()
     for m in models:
-        for d in sentiment_datasets:
+        for d in datasets:
             for pred in read_jsonlines(
-                f"data/dynaboard_model_outputs/{m.name}/sentiment/{d}.jsonl.out"
+                f"data/dynaboard_model_outputs/{m.name}/{task}/{d}.jsonl.out"
             ):
                 item_id = str(pred["id"])
                 pred_label = pred["label"]

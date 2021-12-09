@@ -6,9 +6,10 @@ import numpy as np
 import typer
 from pedroai.io import read_json, shell, write_json
 from rich.console import Console
+from pedroai.io import safe_file
 
 from multidim.config import DATA_ROOT, conf
-from multidim.dynaboard_datasets import Sentiment
+from multidim.dynaboard_datasets import Inference, Sentiment
 
 console = Console()
 
@@ -16,11 +17,17 @@ console = Console()
 topic_app = typer.Typer()
 
 
-def reviews_to_mallet(input_file: str, output_file: str):
-    reviews = Sentiment.from_jsonlines(input_file)
-    with open(output_file, "w") as f:
-        for r in reviews:
-            f.write(f"{r.uid}\t{r.label}\t{r.statement}\n")
+def task_data_to_mallet(task_name: str, input_file: str, output_file: str):
+    if task_name == "sentiment":
+        data = Sentiment.from_jsonlines(input_file)
+    elif task_name == "nli":
+        data = Inference.from_jsonlines(input_file)
+    else:
+        raise NotImplementedError()
+
+    with open(safe_file(output_file), "w") as f:
+        for r in data:
+            f.write(f"{r.uid}\t{r.label}\t{r.example_text()}\n")
 
 
 def load_topics(file: str):

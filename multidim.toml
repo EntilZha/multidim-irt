@@ -1,3 +1,4 @@
-model_type = 'multidim_2pl'
+model_type = '2pl'
 epochs = 4000
-dims = 5
+priors = "hierarchical"
+#dims = 5

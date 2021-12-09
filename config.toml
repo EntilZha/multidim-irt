@@ -2,27 +2,61 @@ data_dir = 'data/'
 dynaboard_model_outputs = 'dynaboard_model_outputs'
 tasks = ["hs", "nli", "qa", "sentiment"]
 
-[sentiment_names.dev]
+[sentiment.dev.names]
 amazon = "amazon-review-dev"
 dynasent_r1 = "dynasent-r1-dev"
 dynasent_r2 = "dynasent-r2-dev"
 sst3 = "sst3-dev"
 yelp = "yelp-review-dev"
 
-[reviews.dev]
+[sentiment.dev.data]
 amazon = "datasets/sentiment/amazon-review-dev.jsonl"
 dynasent_r1 = "datasets/sentiment/dynasent-r1-dev.jsonl"
 dynasent_r2 = "datasets/sentiment/dynasent-r2-dev.jsonl"
 sst3 = "datasets/sentiment/sst3-dev.jsonl"
 yelp = "datasets/sentiment/yelp-review-dev.jsonl"
 
-[mallet_reviews.dev]
-amazon = "datasets/sentiment/amazon-review-dev.mallet"
-dynasent_r1 = "datasets/sentiment/dynasent-r1-dev.mallet"
-dynasent_r2 = "datasets/sentiment/dynasent-r2-dev.mallet"
-sst3 = "datasets/sentiment/sst3-dev.mallet"
-yelp = "datasets/sentiment/yelp-review-dev.mallet"
+[sentiment.dev.mallet]
+amazon = "mallet/sentiment/amazon-review-dev.mallet"
+dynasent_r1 = "mallet/sentiment/dynasent-r1-dev.mallet"
+dynasent_r2 = "mallet/sentiment/dynasent-r2-dev.mallet"
+sst3 = "mallet/sentiment/sst3-dev.mallet"
+yelp = "mallet/sentiment/yelp-review-dev.mallet"
 
-[topic."num_topics=10"]
+[sentiment.dev.topic."num_topics=10"]
 num_topics = 10
 output_dir = "topic-model/sentiment/num_topics=10"
+
+[nli.dev.names]
+anli_r1 = "anli-r1-dev"
+anli_r2 = "anli-r2-dev"
+anli_r3 = 'anli-r3-dev'
+hans = "hans"
+mnli_matched = "mnli-dev-matched"
+mnli_mismatched = "mnli-dev-mismatched"
+nli_stress = "nli-stress-test"
+snli = "snli-dev"
+
+[nli.dev.data]
+anli_r1 = "datasets/nli/anli-r1-dev.jsonl"
+anli_r2 = "datasets/nli/anli-r2-dev.jsonl"
+anli_r3 = 'datasets/nli/anli-r3-dev.jsonl'
+hans = "datasets/nli/hans.jsonl"
+mnli_matched = "datasets/nli/mnli-dev-matched.jsonl"
+mnli_mismatched = "datasets/nli/mnli-dev-mismatched.jsonl"
+nli_stress = "datasets/nli/nli-stress-test.jsonl"
+snli = "datasets/nli/snli-dev.jsonl"
+
+[nli.dev.mallet]
+anli_r1 = "mallet/nli/anli-r1-dev.jsonl"
+anli_r2 = "mallet/nli/anli-r2-dev.jsonl"
+anli_r3 = 'mallet/nli/anli-r3-dev.jsonl'
+hans = "mallet/nli/hans.jsonl"
+mnli_matched = "mallet/nli/mnli-dev-matched.jsonl"
+mnli_mismatched = "mallet/nli/mnli-dev-mismatched.jsonl"
+nli_stress = "mallet/nli/nli-stress-test.jsonl"
+snli = "mallet/nli/snli-dev.jsonl"
+
+[nli.dev.topic."num_topics=10"]
+num_topics = 10
+output_dir = "topic-model/nli/num_topics=10"
