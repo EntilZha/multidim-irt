@@ -15,7 +15,7 @@ log = get_logger(__name__)
 DB_TASKS = ["sentiment"]
 
 
-class DBDataset(luigi.ExternalTask):
+class DBTaskDataset(luigi.ExternalTask):
     task = luigi.Parameter()
     dataset = luigi.Parameter()
 
@@ -25,12 +25,59 @@ class DBDataset(luigi.ExternalTask):
         )
 
 
-class FormatTaskData(luigi.Task):
+class DBMergedTaskDataset(luigi.Task):
+    task = luigi.Parameter()
+
+    @property
+    def _output_path(self):
+        return DATA_ROOT / "datasets" / self.task / "merged.jsonl"
+
+    def requires(self):
+        for dataset in conf[self.task]["dev"]["data"].keys():
+            yield DBTaskDataset(task=self.task, dataset=dataset)
+
+    def run(self):
+        examples = []
+        for path in conf[self.task]["dev"]["data"].values():
+            task_examples = read_jsonlines(DATA_ROOT / path)
+            log.info(f"Reading {self.task}: {len(task_examples)} examples")
+            examples.extend(task_examples)
+        write_jsonlines(self._output_path, examples)
+
+    def output(self):
+        return luigi.LocalTarget(self._output_path)
+
+
+class FormatMergedTaskData(luigi.Task):
+    task = luigi.Parameter()
+
+    def requires(self):
+        return DBMergedTaskDataset(task=self.task)
+
+    @property
+    def _input_path(self):
+        return DATA_ROOT / "datasets" / self.task / "merged.jsonl"
+
+    @property
+    def _output_path(self):
+        return DATA_ROOT / "mallet" / self.task / "merged.mallet"
+
+    def run(self):
+        log.info("Reformatting data from jsonl to mallet")
+        log.info(f"Input: {self._input_path}")
+        log.info(f"Output: {self._output_path}")
+        task_data_to_mallet(self.task, self._input_path, self._output_path)
+
+    def output(self):
+        return self._output_path
+
+
+class FormatTaskDatasetData(luigi.Task):
     task = luigi.Parameter()
     dataset = luigi.Parameter()
 
     def requires(self):
-        return DBDataset(task=self.task, dataset=self.dataset)
+        return DBTaskDataset(task=self.task, dataset=self.dataset)
 
     @property
     def _input_path(self):
@@ -50,7 +97,7 @@ class FormatTaskData(luigi.Task):
         return self._output_path
 
 
-class TaskTopicModel(luigi.Task):
+class PerTaskDatasetTopicModel(luigi.Task):
     task = luigi.Parameter()
     dataset = luigi.Parameter()
     num_topics = luigi.IntParameter(default=10)
@@ -60,7 +107,7 @@ class TaskTopicModel(luigi.Task):
     doc_topics_threshold = luigi.FloatParameter(default=0.05)
 
     def requires(self):
-        return FormatTaskData(task=self.task, dataset=self.dataset)
+        return FormatTaskDatasetData(task=self.task, dataset=self.dataset)
 
     @property
     def _input_path(self):
@@ -97,12 +144,58 @@ class TaskTopicModel(luigi.Task):
         ]
 
 
+class MergedTaskTopicModel(luigi.Task):
+    task = luigi.Parameter()
+    num_topics = luigi.IntParameter(default=10)
+    optimize_interval = luigi.IntParameter(default=10)
+    remove_stopwords = luigi.BoolParameter(default=True)
+    num_iterations = luigi.IntParameter(default=10)
+    doc_topics_threshold = luigi.FloatParameter(default=0.05)
+
+    def requires(self):
+        return FormatMergedTaskData(task=self.task)
+
+    @property
+    def _input_path(self):
+        return DATA_ROOT / "mallet" / self.task / "merged.mallet"
+
+    @property
+    def _output_dir(self):
+        return (
+            DATA_ROOT
+            / conf[self.task]["dev"]["topic"][f"num_topics={self.num_topics}"][
+                "output_dir"
+            ]
+            / "merged"
+        )
+
+    def run(self):
+        model = TopicModel(
+            input_file=self._input_path,
+            num_topics=self.num_topics,
+            output_dir=self._output_dir,
+            optimize_interval=self.optimize_interval,
+            remove_stopwords=self.remove_stopwords,
+            num_iterations=self.num_iterations,
+            doc_topics_threshold=self.doc_topics_threshold,
+        )
+        model.train()
+
+    def output(self):
+        return [
+            luigi.LocalTarget(self._output_dir / "mallet.model"),
+            luigi.LocalTarget(self._output_dir / "mallet.state.gz"),
+            luigi.LocalTarget(self._output_dir / "mallet.topic_distributions"),
+            luigi.LocalTarget(self._output_dir / "mallet.topic_keys"),
+        ]
+
+
 class TaskToPyIrt(luigi.Task):
     task = luigi.Parameter()
 
     def requires(self):
         for dataset in conf[self.task]["dev"]["data"].keys():
-            yield DBDataset(task=self.task, dataset=dataset)
+            yield DBTaskDataset(task=self.task, dataset=dataset)
 
     def run(self):
         dataset_labels, _ = load_gold_labels()
@@ -165,5 +258,6 @@ class AllTasks(luigi.WrapperTask):
     def requires(self):
         for task in DB_TASKS:
             yield TrainPyIrt(task=task)
+            yield MergedTaskTopicModel(task=task)
             for dataset in conf[task]["dev"]["names"].keys():
-                yield TaskTopicModel(task=task, dataset=dataset)
+                yield PerTaskDatasetTopicModel(task=task, dataset=dataset)
