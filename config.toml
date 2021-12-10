@@ -2,6 +2,12 @@ data_dir = 'data/'
 dynaboard_model_outputs = 'dynaboard_model_outputs'
 tasks = ["hs", "nli", "qa", "sentiment"]
 
+[sentiment.dev.topic."num_topics=10"]
+mallet = "mallet/sentiment/merged.mallet"
+num_topics = 10
+output_dir = "topic-model/sentiment/num_topics=10"
+
+
 [sentiment.dev.names]
 amazon = "amazon-review-dev"
 dynasent_r1 = "dynasent-r1-dev"
@@ -23,9 +29,6 @@ dynasent_r2 = "mallet/sentiment/dynasent-r2-dev.mallet"
 sst3 = "mallet/sentiment/sst3-dev.mallet"
 yelp = "mallet/sentiment/yelp-review-dev.mallet"
 
-[sentiment.dev.topic."num_topics=10"]
-num_topics = 10
-output_dir = "topic-model/sentiment/num_topics=10"
 
 [nli.dev.names]
 anli_r1 = "anli-r1-dev"

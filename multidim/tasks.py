@@ -156,11 +156,14 @@ class MergedTaskTopicModel(luigi.Task):
         return FormatMergedTaskData(task=self.task)
 
     @property
-    def _input_path(self):
-        return DATA_ROOT / "mallet" / self.task / "merged.mallet"
+    def input_path(self):
+        return (
+            DATA_ROOT
+            / conf[self.task]["dev"]["topic"][f"num_topics={self.num_topics}"]["mallet"]
+        )
 
     @property
-    def _output_dir(self):
+    def output_dir(self):
         return (
             DATA_ROOT
             / conf[self.task]["dev"]["topic"][f"num_topics={self.num_topics}"][
@@ -171,9 +174,9 @@ class MergedTaskTopicModel(luigi.Task):
 
     def run(self):
         model = TopicModel(
-            input_file=self._input_path,
+            input_file=self.input_path,
             num_topics=self.num_topics,
-            output_dir=self._output_dir,
+            output_dir=self.output_dir,
             optimize_interval=self.optimize_interval,
             remove_stopwords=self.remove_stopwords,
             num_iterations=self.num_iterations,
@@ -183,10 +186,10 @@ class MergedTaskTopicModel(luigi.Task):
 
     def output(self):
         return [
-            luigi.LocalTarget(self._output_dir / "mallet.model"),
-            luigi.LocalTarget(self._output_dir / "mallet.state.gz"),
-            luigi.LocalTarget(self._output_dir / "mallet.topic_distributions"),
-            luigi.LocalTarget(self._output_dir / "mallet.topic_keys"),
+            luigi.LocalTarget(self.output_dir / "mallet.model"),
+            luigi.LocalTarget(self.output_dir / "mallet.state.gz"),
+            luigi.LocalTarget(self.output_dir / "mallet.topic_distributions"),
+            luigi.LocalTarget(self.output_dir / "mallet.topic_keys"),
         ]
 
 

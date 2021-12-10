@@ -1,6 +1,6 @@
 """Copyright (c) Facebook, Inc. and its affiliates."""
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Union
 
 import numpy as np
 import typer
@@ -143,6 +143,45 @@ class TopicModel:
                 "doc_topics_threshold": self._doc_topics_threshold,
                 "random_seed": self._random_seed,
             },
+        )
+
+
+def parse_topic_line(line: str):
+    entries = line.strip().split("\t")
+    doc_id = int(entries[0])
+    example_id = entries[1]
+    proportions = entries[2:]
+    topic_dist = {}
+    for i in range(0, len(proportions), 2):
+        topic_id = int(proportions[i])
+        prob = float(proportions[i + 1])
+        topic_dist[topic_id] = prob
+    return {
+        "doc_id": doc_id,
+        "example_id": example_id,
+        "topic_dist": topic_dist,
+        "top_topic_id": int(proportions[0]),
+    }
+
+
+def parse_topic_distributions(input_dir: str):
+    results = {}
+    with open(input_dir) as f:
+        for line in f:
+            if line.startswith("#doc"):
+                continue
+            parsed = parse_topic_line(line)
+            if parsed["doc_id"] in results:
+                raise ValueError()
+            results[parsed["doc_id"]] = parsed
+    return results
+
+
+class TopicModelOutput:
+    def __init__(self, input_dir: str) -> None:
+        self.input_dir = input_dir
+        self.topic_distribution = parse_topic_distributions(
+            Path(input_dir) / "mallet.topic_distributions"
         )
 
 
