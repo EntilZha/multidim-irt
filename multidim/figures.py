@@ -87,9 +87,7 @@ def plot_diff_by_topic(filetypes: List[str], commit: bool = False):
     tm_task = MergedTaskTopicModel(task=task, num_topics=num_topics)
     assert tm_task.complete()
     model = TopicModelOutput(tm_task.output_dir)
-    irt_params = read_json(
-        DATA_ROOT / "irt-models" / "sentiment" / "best_parameters.json"
-    )
+    irt_params = read_json(DATA_ROOT / "nn-irt" / "sentiment" / "best_parameters.json")
     id_to_diff = {}
     for str_idx, item_id in irt_params["item_ids"].items():
         idx = int(str_idx)
@@ -113,11 +111,12 @@ def plot_diff_by_topic(filetypes: List[str], commit: bool = False):
         )
     df = pd.DataFrame(rows)
     width = 600
+    bins = 25
     hist = (
         alt.Chart(df)
         .mark_bar()
         .encode(
-            x=alt.X("diff", bin=alt.Bin(maxbins=30), title="Example Difficulty"),
+            x=alt.X("diff", bin=alt.Bin(maxbins=bins), title=None),
             y=alt.Y("count()", title="Count"),
         )
         .properties(height=40, width=width)
@@ -126,16 +125,16 @@ def plot_diff_by_topic(filetypes: List[str], commit: bool = False):
         alt.Chart(df)
         .mark_bar()
         .encode(
-            x=alt.X("diff", bin=alt.Bin(maxbins=30), title="IRT Difficulty"),
+            x=alt.X("diff", bin=alt.Bin(maxbins=bins), title="IRT Difficulty"),
             y=alt.Y("count()", stack="normalize", title="Percent of Histogram Bin"),
             color=alt.Color(
                 "top_topic:N",
-                title="Primary Example Topic",
+                title="Example Topic",
                 legend=alt.Legend(
                     orient="none",
                     titleAnchor="middle",
                     legendX=225,
-                    legendY=-40,
+                    legendY=-42,
                     direction="horizontal",
                 ),
             ),
@@ -144,15 +143,18 @@ def plot_diff_by_topic(filetypes: List[str], commit: bool = False):
 
     text = (
         alt.Chart(df)
-        .mark_text(dy=8, color="white")
+        .mark_text(dy=8, color="white", fontSize=14)
         .encode(
-            x=alt.X("diff", bin=alt.Bin(maxbins=30)),
+            x=alt.X("diff", bin=alt.Bin(maxbins=bins)),
             y=alt.Y("count()", stack="normalize"),
             detail="top_topic:N",
             text=alt.Text("count()"),
         )
     )
     chart = hist & (bars + text).properties(width=width)
+    chart = chart.configure_axis(titleFontSize=18, labelFontSize=16).configure_legend(
+        labelFontSize=16, titleFontSize=18
+    )
     save_chart(chart, AUTO_FIG / "diff_by_topic", filetypes)
 
 
