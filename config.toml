@@ -2,6 +2,16 @@ data_dir = 'data/'
 dynaboard_model_outputs = 'dynaboard_model_outputs'
 tasks = ["hs", "nli", "qa", "sentiment"]
 
+[sentiment.dev.topic."num_topics=3"]
+mallet = "mallet/sentiment/merged.mallet"
+num_topics = 3
+output_dir = "topic-model/sentiment/num_topics=3"
+
+[sentiment.dev.topic."num_topics=5"]
+mallet = "mallet/sentiment/merged.mallet"
+num_topics = 5
+output_dir = "topic-model/sentiment/num_topics=5"
+
 [sentiment.dev.topic."num_topics=10"]
 mallet = "mallet/sentiment/merged.mallet"
 num_topics = 10
@@ -21,13 +31,6 @@ dynasent_r1 = "datasets/sentiment/dynasent-r1-dev.jsonl"
 dynasent_r2 = "datasets/sentiment/dynasent-r2-dev.jsonl"
 sst3 = "datasets/sentiment/sst3-dev.jsonl"
 yelp = "datasets/sentiment/yelp-review-dev.jsonl"
-
-[sentiment.dev.mallet]
-amazon = "mallet/sentiment/amazon-review-dev.mallet"
-dynasent_r1 = "mallet/sentiment/dynasent-r1-dev.mallet"
-dynasent_r2 = "mallet/sentiment/dynasent-r2-dev.mallet"
-sst3 = "mallet/sentiment/sst3-dev.mallet"
-yelp = "mallet/sentiment/yelp-review-dev.mallet"
 
 
 [nli.dev.names]
@@ -60,6 +63,17 @@ mnli_mismatched = "mallet/nli/mnli-dev-mismatched.jsonl"
 nli_stress = "mallet/nli/nli-stress-test.jsonl"
 snli = "mallet/nli/snli-dev.jsonl"
 
+[nli.dev.topic."num_topics=3"]
+mallet = "mallet/nli/merged.mallet"
+num_topics = 3
+output_dir = "topic-model/nli/num_topics=3"
+
+[nli.dev.topic."num_topics=5"]
+mallet = "mallet/nli/merged.mallet"
+num_topics = 5
+output_dir = "topic-model/nli/num_topics=5"
+
 [nli.dev.topic."num_topics=10"]
+mallet = "mallet/nli/merged.mallet"
 num_topics = 10
 output_dir = "topic-model/nli/num_topics=10"

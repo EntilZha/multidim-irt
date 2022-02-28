@@ -1,4 +1,6 @@
 """Copyright (c) Facebook, Inc. and its affiliates."""
+from typing import List
+import re
 from pathlib import Path
 from typing import Union
 
@@ -8,26 +10,144 @@ from pedroai.io import read_json, shell, write_json
 from rich.console import Console
 from pedroai.io import safe_file
 
-from multidim.config import DATA_ROOT, conf
 from multidim.dynaboard_datasets import Inference, Sentiment
 
 console = Console()
 
 
 topic_app = typer.Typer()
-
-
-def task_data_to_mallet(task_name: str, input_file: str, output_file: str):
-    if task_name == "sentiment":
-        data = Sentiment.from_jsonlines(input_file)
-    elif task_name == "nli":
-        data = Inference.from_jsonlines(input_file)
-    else:
-        raise NotImplementedError()
-
-    with open(safe_file(output_file), "w") as f:
-        for r in data:
-            f.write(f"{r.uid}\t{r.label}\t{r.example_text()}\n")
+STOPS = [
+    "i",
+    "me",
+    "my",
+    "myself",
+    "we",
+    "our",
+    "ours",
+    "ourselves",
+    "you",
+    "your",
+    "yours",
+    "yourself",
+    "yourselves",
+    "he",
+    "him",
+    "his",
+    "himself",
+    "she",
+    "her",
+    "hers",
+    "herself",
+    "it",
+    "its",
+    "itself",
+    "they",
+    "them",
+    "their",
+    "theirs",
+    "themselves",
+    "what",
+    "which",
+    "who",
+    "whom",
+    "this",
+    "that",
+    "these",
+    "those",
+    "am",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "have",
+    "has",
+    "had",
+    "having",
+    "do",
+    "does",
+    "did",
+    "doing",
+    "a",
+    "an",
+    "the",
+    "and",
+    "but",
+    "if",
+    "or",
+    "because",
+    "as",
+    "until",
+    "while",
+    "of",
+    "at",
+    "by",
+    "for",
+    "with",
+    "about",
+    "against",
+    "between",
+    "into",
+    "through",
+    "during",
+    "before",
+    "after",
+    "above",
+    "below",
+    "to",
+    "from",
+    "up",
+    "down",
+    "in",
+    "out",
+    "on",
+    "off",
+    "over",
+    "under",
+    "again",
+    "further",
+    "then",
+    "once",
+    "here",
+    "there",
+    "when",
+    "where",
+    "why",
+    "how",
+    "all",
+    "any",
+    "both",
+    "each",
+    "few",
+    "more",
+    "most",
+    "other",
+    "some",
+    "such",
+    "no",
+    "nor",
+    "not",
+    "only",
+    "own",
+    "same",
+    "so",
+    "than",
+    "too",
+    "very",
+    "s",
+    "t",
+    "can",
+    "will",
+    "just",
+    "don",
+    "should",
+    "now",
+    "ve",
+    "ll",
+    "amp",
+]
 
 
 def load_topics(file: str):
@@ -42,31 +162,88 @@ def load_topics(file: str):
     return uid_to_topics
 
 
-class TopicModel:
-    PROCESSED_INPUT = "input_data.mallet"
+PROCESSED_MALLET_FILENAME = "input_data.mallet"
 
+
+def process_string(
+    text,
+    lowercase=True,
+    remove_short_words=True,
+    remove_stop_words=True,
+    remove_punctuation=True,
+    numbers="replace",
+    stop_words=STOPS,
+    stop_words_extra=[],
+):
+    if lowercase:
+        text = text.lower()
+    if numbers == "replace":
+        text = re.sub("[0-9]+", "NUM", text)
+    elif numbers == "remove":
+        text = re.sub("[0-9]+", " ", text)
+    if remove_punctuation:
+        text = re.sub(r"[^\sA-Za-z0-9À-ÖØ-öø-ÿЀ-ӿ/]", " ", text)
+    if remove_stop_words:
+        text = " ".join(
+            [word for word in text.split() if word not in stop_words + stop_words_extra]
+        )
+    if remove_short_words:
+        text = " ".join([word for word in text.split() if not len(word) <= 2])
+    text = " ".join(text.split())
+    return text
+
+
+class TopicModel:
     def __init__(
         self,
         *,
-        input_file: Union[str, Path],
+        model_dir: Union[str, Path],
         num_topics: int,
-        output_dir: Union[str, Path],
         optimize_interval: int = 10,
         remove_stopwords: bool = True,
+        remove_punctuation: bool = True,
+        remove_short_words: bool = True,
+        lowercase: bool = True,
         num_iterations: int = 1000,
         doc_topics_threshold: float = 0.05,
         random_seed: int = 0,
     ) -> None:
         super().__init__()
-        self._input_file = Path(input_file)
+        self._model_dir = model_dir
+        self._input_file = Path(model_dir) / PROCESSED_MALLET_FILENAME
         self._num_topics = num_topics
         self._optimize_interval = optimize_interval
-        self._output_dir = Path(output_dir)
+        self._output_dir = Path(model_dir)
         self._output_dir.mkdir(exist_ok=True, parents=True)
         self._remove_stopwords = remove_stopwords
         self._num_iterations = num_iterations
         self._random_seed = random_seed
         self._doc_topics_threshold = doc_topics_threshold
+        self._lowercase = lowercase
+        self._remove_punctuation = remove_punctuation
+        self._remove_short_words = remove_short_words
+
+    def preprocess(self, task_name: str, input_json_file: str) -> List:
+        console.log(f"Reformatting data from jsonl to mallet for {task_name}")
+        console.log(f"Input: {input_json_file}")
+        console.log(f"Output: {self._input_file}")
+        if task_name == "sentiment":
+            data = Sentiment.from_jsonlines(input_json_file)
+        elif task_name == "nli":
+            data = Inference.from_jsonlines(input_json_file)
+        else:
+            raise NotImplementedError()
+
+        with open(safe_file(self._input_file), "w") as f:
+            for r in data:
+                text = process_string(
+                    r.example_text(),
+                    lowercase=self._lowercase,
+                    remove_short_words=self._remove_short_words,
+                    remove_stop_words=self._remove_stopwords,
+                    remove_punctuation=self._remove_punctuation,
+                )
+                f.write(f"{r.uid}\t{r.label}\t{text}\n")
 
     @classmethod
     def load(cls, output_dir: Union[str, Path]):
@@ -83,15 +260,21 @@ class TopicModel:
             random_seed=parameters["random_seed"],
         )
 
-    def _import_data(self):
-        args = ["mallet", "import-file", "--keep-sequence", "--preserve-case"]
+    def import_data_command(self):
+        args = ["mallet", "import-file", "--keep-sequence"]
         if self._remove_stopwords:
             args.append("--remove-stopwords")
+        if not self._lowercase:
+            args.append("--preserve-case")
         args.append("--input")
         args.append(str(self._input_file))
         args.append("--output")
-        args.append(str(self._output_dir / self.PROCESSED_INPUT))
+        args.append(str(self._output_dir / PROCESSED_MALLET_FILENAME))
         command = " ".join(args)
+        return command
+
+    def _import_data(self):
+        command = self.import_data_command()
         console.log("Running: ", command)
         shell(command)
 
@@ -107,13 +290,12 @@ class TopicModel:
     def model_state_file(self):
         return str(self._output_dir / "mallet.state.gz")
 
-    def train(self):
-        self._import_data()
+    def train_command(self):
         args = [
             "mallet",
             "train-topics",
             "--input",
-            str(self._output_dir / self.PROCESSED_INPUT),
+            str(self._output_dir / PROCESSED_MALLET_FILENAME),
             "--num-topics",
             str(self._num_topics),
             "--output-topic-keys",
@@ -128,8 +310,17 @@ class TopicModel:
             str(self._random_seed),
             "--doc-topics-threshold",
             str(self._doc_topics_threshold),
+            "--optimize-interval",
+            str(self._optimize_interval),
+            "--num-iterations",
+            str(self._num_iterations),
         ]
         command = " ".join(args)
+        return command
+
+    def train(self):
+        self._import_data()
+        command = self.train_command()
         console.log("Running: ", command)
         shell(command)
         write_json(

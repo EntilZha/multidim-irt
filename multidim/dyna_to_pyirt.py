@@ -1,3 +1,4 @@
+import re
 from typing import List
 import typer
 import pydantic
@@ -5,7 +6,7 @@ import numpy as np
 from pathlib import Path
 from collections import defaultdict
 import pandas as pd
-from pedroai.io import read_json, read_jsonlines, write_json, write_jsonlines
+from pedroai.io import read_json, read_jsonlines, write_jsonlines
 from pedroai.altair import save_chart
 import altair as alt
 from dataset import Dataset
@@ -18,14 +19,22 @@ alt.data_transformers.disable_max_rows()
 
 class DynabenchModel(pydantic.BaseModel):
     name: str
-    sentiment_dev: str
+    task: str
+    dev_pred_dir: str
 
 
-def list_models() -> List[DynabenchModel]:
+def list_models(task: str) -> List[DynabenchModel]:
     models = []
-    for p in Path("data/dynaboard_model_outputs").iterdir():
+    for p in Path(f"data/dynaboard_predictions/{task}").iterdir():
         if p.is_dir():
-            models.append(DynabenchModel(sentiment_dev=str(p), name=p.name))
+            maybe_match = re.search(".*ts[0-9]+\-(.+)", str(p))
+            if maybe_match is None:
+                raise ValueError(f"Failed match for: {p}")
+            else:
+                model_name = maybe_match.group(1)
+                models.append(
+                    DynabenchModel(dev_pred_dir=str(p), name=model_name, task=task)
+                )
     return models
 
 
