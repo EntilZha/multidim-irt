@@ -110,8 +110,8 @@ def plot_diff_by_topic(filetypes: List[str], commit: bool = False):
             }
         )
     df = pd.DataFrame(rows)
-    width = 600
-    bins = 25
+    width = 650
+    bins = 20
     hist = (
         alt.Chart(df)
         .mark_bar()
@@ -152,8 +152,8 @@ def plot_diff_by_topic(filetypes: List[str], commit: bool = False):
         )
     )
     chart = hist & (bars + text).properties(width=width)
-    chart = chart.configure_axis(titleFontSize=18, labelFontSize=16).configure_legend(
-        labelFontSize=16, titleFontSize=18
+    chart = chart.configure_axis(titleFontSize=20, labelFontSize=18).configure_legend(
+        labelFontSize=18, titleFontSize=20
     )
     save_chart(chart, AUTO_FIG / "diff_by_topic", filetypes)
 
