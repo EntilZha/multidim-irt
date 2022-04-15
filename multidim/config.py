@@ -8,4 +8,4 @@ ROOT = Path(os.environ.get("MULTIDIM_ROOT", "./"))
 
 with open(ROOT / "config.toml") as f:
     conf = toml.load(f)
-    DATA_ROOT = ROOT / conf['data_dir']
+    DATA_ROOT = ROOT / conf["data_dir"]
