@@ -1,6 +1,5 @@
 from pathlib import Path
 from py_irt.cli import train
-from multidim.nn_2pl import NNTwoParamLog
 
 
 def main():

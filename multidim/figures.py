@@ -1,9 +1,9 @@
 import pandas as pd
 import altair as alt
-from multidim.dynaboard_datasets import Sentiment, NliLabel
+from multidim.dynaboard_datasets import Sentiment
 from multidim.config import conf, DATA_ROOT
 from multidim.topic import TopicModelOutput
-from multidim.tasks import MergedTaskTopicModel, TopicModel
+from multidim.tasks import MergedTaskTopicModel
 
 
 from typing import Union, List, Optional
@@ -14,8 +14,7 @@ from rich.console import Console
 import altair_saver
 import typer
 
-from pedroai.io import read_json, requires_file, safe_file
-from pedroai.math import to_precision
+from pedroai.io import read_json, safe_file
 
 
 alt.data_transformers.disable_max_rows()
